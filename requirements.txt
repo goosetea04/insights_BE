@@ -1,0 +1,7 @@
+fastapi
+reportlab
+python-dotenv
+uvicorn
+pydantic
+openai
+pandas
