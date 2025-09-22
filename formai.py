@@ -10,6 +10,7 @@ import numpy as np
 from datetime import datetime
 import json
 import io
+import uvicorn
 from dataclasses import dataclass, asdict
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter, A4
