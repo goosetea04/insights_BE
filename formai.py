@@ -647,26 +647,66 @@ class AICareerMatcher:
         }
 
     def generate_pdf_report(self, analysis_data: Dict, job_name: str) -> io.BytesIO:
-        """Generate a comprehensive PDF report for a specific job match"""
+        """Generate a comprehensive PDF report matching the Pookie style"""
         buffer = io.BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.5*inch)
+        doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.5*inch)
+        avail_w = doc.width
         
-        # Get styles
+        # Enhanced styles
         styles = getSampleStyleSheet()
+        
+        # Custom styles matching the sample
         title_style = ParagraphStyle(
             'CustomTitle',
-            parent=styles['Heading1'],
-            fontSize=24,
-            spaceAfter=30,
-            textColor=colors.HexColor('#2E3440')
+            parent=styles['Title'],
+            fontSize=28,
+            spaceAfter=10,
+            textColor=colors.HexColor('#1a1a1a'),
+            fontName='Helvetica-Bold'
         )
         
-        heading_style = ParagraphStyle(
-            'CustomHeading',
+        email_style = ParagraphStyle(
+            'EmailStyle',
+            parent=styles['Normal'],
+            fontSize=12,
+            spaceAfter=30,
+            textColor=colors.HexColor('#666666')
+        )
+
+        cell_style = ParagraphStyle(
+            'Cell',
+            parent=styles['Normal'],
+            fontSize=9,
+            leading=12,             
+            textColor=colors.black,
+            spaceAfter=4,
+            wordWrap='CJK'          
+        )
+        
+        section_header_style = ParagraphStyle(
+            'SectionHeader',
+            parent=styles['Heading1'],
+            fontSize=20,
+            spaceAfter=15,
+            textColor=colors.HexColor('#2E3440'),
+            fontName='Helvetica-Bold'
+        )
+        
+        subsection_style = ParagraphStyle(
+            'SubsectionHeader',
             parent=styles['Heading2'],
             fontSize=16,
-            spaceAfter=12,
-            textColor=colors.HexColor('#5E81AC')
+            spaceAfter=10,
+            textColor=colors.HexColor('#5E81AC'),
+            fontName='Helvetica-Bold'
+        )
+        
+        body_style = ParagraphStyle(
+            'BodyText',
+            parent=styles['Normal'],
+            fontSize=11,
+            spaceAfter=8,
+            leading=14
         )
         
         # Find the specific job match
@@ -677,123 +717,326 @@ class AICareerMatcher:
                 break
         
         if not job_match:
-            job_match = analysis_data['matches'][0]  # Fallback to top match
+            job_match = analysis_data['matches'][0]
         
-        # Build PDF content
         story = []
         
-        # Title Page
-        story.append(Paragraph(f"Career Analysis Report", title_style))
-        story.append(Paragraph(f"{analysis_data['profile']['name']}", styles['Heading2']))
-        story.append(Paragraph(f"Position: {job_match['job_name']}", styles['Heading3']))
+        # Header with name and email
+        story.append(Paragraph(analysis_data['profile']['name'], title_style))
+        story.append(Paragraph(analysis_data['profile']['email'], email_style))
+        
+        # Top 3 Careers Section
+        story.append(Paragraph("Top 3 Career Matches", section_header_style))
+        
+        # Methodology explanation (similar to sample)
+        methodology_text = """We have identified your top career matches using a sophisticated algorithm that integrates your preferences, 
+        personality, and skills with five proven, industry-leading frameworks and assessments:<br/><br/>
+        
+        1. <b>RIASEC:</b> Your work-interest mix across six themes (Realistic, Investigative, Artistic, Social, Enterprising, Conventional)<br/>
+        2. <b>OCEAN:</b> Your Big Five personality profile (Openness, Conscientiousness, Extraversion, Agreeableness, Emotional Stability)<br/>
+        3. <b>Skills:</b> Your core strengths and learning modes (analytical, creative, technical)<br/>
+        4. <b>Values:</b> What you want from work (Income, Impact, Stability, Variety, Recognition, Autonomy)<br/>
+        5. <b>Direct Skills:</b> A 16-skill self-rating across everyday abilities matched directly to job requirements
+        """
+        story.append(Paragraph(methodology_text, body_style))
         story.append(Spacer(1, 20))
         
-        # Executive Summary
-        story.append(Paragraph("Executive Summary", heading_style))
-        story.append(Paragraph(job_match.get('ai_summary', 'AI summary not available'), styles['Normal']))
-        story.append(Spacer(1, 15))
+        # Top 3 careers table
+        career_data = [[
+            'Career', 'Overall %', 'Skills %', 'Values %', 'Interest %', 'Personality %', '1-line Why'
+        ]]
+
+        for i, match in enumerate(analysis_data['matches'][:3]):
+            why_text = self._generate_one_line_why(match, analysis_data['profile'])
+            career_data.append([
+                Paragraph(match['job_name'], cell_style),
+                f"{match['overall_match']}%",
+                f"{match['breakdown']['skills_match']}%",
+                f"{match['breakdown']['values_match']}%",
+                f"{match['breakdown']['interests_match']}%",
+                f"{match['breakdown']['work_styles_match']}%",
+                Paragraph(why_text, cell_style)
+            ])
+
         
-        # Match Score Overview
-        story.append(Paragraph("Match Analysis", heading_style))
-        match_data = [
-            ['Category', 'Score'],
-            ['Overall Match', f"{job_match['overall_match']}%"],
-            ['Skills Match', f"{job_match['breakdown']['skills_match']}%"],
-            ['Values Match', f"{job_match['breakdown']['values_match']}%"],
-            ['Interests Match', f"{job_match['breakdown']['interests_match']}%"],
-            ['Work Styles Match', f"{job_match['breakdown']['work_styles_match']}%"]
-        ]
-        
-        match_table = Table(match_data, colWidths=[3*inch, 2*inch])
-        match_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#D8DEE9')),
+        career_table = Table(
+            career_data,
+            colWidths=[
+                0.26*avail_w,  # Career
+                0.10*avail_w,  # Overall %
+                0.10*avail_w,  # Skills %
+                0.10*avail_w,  # Values %
+                0.10*avail_w,  # Interest %
+                0.10*avail_w,  # Personality %
+                0.24*avail_w   # 1-line Why
+            ]
+        )
+        career_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#E8E8E8')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('ALIGN', (1, 0), (5, -1), 'CENTER'),  # Center align percentages
+            ('ALIGN', (0, 0), (0, -1), 'LEFT'),    # Left align job names
+            ('ALIGN', (6, 0), (6, -1), 'LEFT'),    # Left align why column
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP')
+        ]))
+        story.append(career_table)
+        story.append(Spacer(1, 30))
+        
+        # Most Compatible Field Analysis (focused on selected job)
+        story.append(Paragraph(f"Most Compatible Field: {job_match['job_name']}", subsection_style))
+        story.append(Paragraph(f"Score: {job_match['overall_match']}%", body_style))
+        story.append(Spacer(1, 10))
+        
+        # Strengths and Gaps in two columns
+        strengths_gaps_data = [['Strengths', 'Gaps']]
+        
+        # Format strengths
+        strengths_text = ""
+        for s in job_match.get('strengths', [])[:4]:
+            strengths_text += f"• {s}<br/>"
+
+        gaps_text = ""
+        improvements = job_match.get('improvements', [])[:3]
+        if improvements:
+            for imp in improvements:
+                gaps_text += f"• {imp['skill']}: improve {imp['current_level']}/5 → {imp['required_level']}/5<br/>"
+        else:
+            gaps_text = ("• Strong alignment across key areas<br/>"
+                        "• Minor refinements in specialized skills may boost advancement<br/>")
+
+        strengths_gaps_data.append([
+            Paragraph(strengths_text, cell_style),
+            Paragraph(gaps_text, cell_style)
+        ])
+
+        
+        strengths_gaps_table = Table(strengths_gaps_data, colWidths=[avail_w/2, avail_w/2])
+        strengths_gaps_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#F5F5F5')),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
             ('FONTSIZE', (0, 0), (-1, 0), 12),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+            ('FONTSIZE', (0, 1), (-1, -1), 10),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 10)
         ]))
-        story.append(match_table)
+        story.append(strengths_gaps_table)
         story.append(Spacer(1, 20))
         
-        # Keywords
-        story.append(Paragraph("Key Focus Areas", heading_style))
-        keywords_text = " • ".join(job_match.get('keywords', ['Professional', 'Skilled', 'Growth-oriented']))
-        story.append(Paragraph(keywords_text, styles['Normal']))
-        story.append(Spacer(1, 15))
-        
-        # O-NET Categories
-        story.append(Paragraph("O-NET Professional Profile", heading_style))
-        onet_cats = job_match.get('onet_categories', {})
-        for category, items in onet_cats.items():
-            story.append(Paragraph(f"<b>{category.replace('_', ' ').title()}:</b> {', '.join(items)}", styles['Normal']))
-        story.append(Spacer(1, 15))
-        
-        # Action Plan
+        # Improvement Hacks
+        story.append(Paragraph("Improvement Hacks:", subsection_style))
         action_plan = job_match.get('action_plan', {})
-        story.append(Paragraph("Development Action Plan", heading_style))
-        
-        if 'top_needs' in action_plan:
-            story.append(Paragraph("<b>Priority Development Areas:</b>", styles['Normal']))
-            for i, need in enumerate(action_plan['top_needs'], 1):
-                story.append(Paragraph(f"{i}. {need}", styles['Normal']))
-            story.append(Spacer(1, 10))
-        
         if 'action_items' in action_plan:
-            story.append(Paragraph("<b>Recommended Actions:</b>", styles['Normal']))
-            for i, action in enumerate(action_plan['action_items'], 1):
-                story.append(Paragraph(f"{i}. {action}", styles['Normal']))
-        story.append(Spacer(1, 15))
-        
-        # Page break
-        story.append(PageBreak())
-        
-        # Career Story
-        story.append(Paragraph("Your Career Narrative", heading_style))
-        career_story = job_match.get('career_story', 'Career story not available')
-        story.append(Paragraph(career_story, styles['Normal']))
+            for item in action_plan['action_items'][:4]:
+                story.append(Paragraph(f"• {item}", body_style))
         story.append(Spacer(1, 20))
         
-        # Interview Insights
-        story.append(Paragraph("Interview Preparation Guide", heading_style))
+        # Interview Tips
+        story.append(Paragraph("Interview Tips", subsection_style))
         interview_insights = job_match.get('interview_insights', {})
         
         if 'key_selling_points' in interview_insights:
-            story.append(Paragraph("<b>Your Key Selling Points:</b>", styles['Normal']))
-            for point in interview_insights['key_selling_points']:
-                story.append(Paragraph(f"• {point}", styles['Normal']))
-            story.append(Spacer(1, 10))
-        
-        if 'story_examples' in interview_insights:
-            story.append(Paragraph("<b>Stories to Prepare:</b>", styles['Normal']))
-            for story_example in interview_insights['story_examples']:
-                story.append(Paragraph(f"• {story_example}", styles['Normal']))
-            story.append(Spacer(1, 10))
+            story.append(Paragraph(f"• <b>Open with:</b> \"I'm a {self._create_opening_line(job_match, analysis_data['profile'])}\"", body_style))
+            
+            for i, point in enumerate(interview_insights['key_selling_points'][:3], 2):
+                story.append(Paragraph(f"• <b>Point {i}:</b> {point}", body_style))
         
         if 'questions_to_ask' in interview_insights:
-            story.append(Paragraph("<b>Strategic Questions to Ask:</b>", styles['Normal']))
-            for question in interview_insights['questions_to_ask']:
-                story.append(Paragraph(f"• {question}", styles['Normal']))
+            story.append(Paragraph(f"• <b>Close with a fit test:</b> \"{interview_insights['questions_to_ask'][0]}\"", body_style))
         
+        story.append(PageBreak())
+        
+        # Skills Analysis
+        story.append(Paragraph("Skills", section_header_style))
+        
+        # What Works / What Doesn't table
+        skills_analysis_data = [['What Works?', 'What Doesn\'t?']]
+        
+        # Find top skills and gaps
+        user_skills = analysis_data['profile']['skills']
+        top_skills = sorted(user_skills.items(), key=lambda x: x[1], reverse=True)[:3]
+        weak_skills = sorted(user_skills.items(), key=lambda x: x[1])[:2]
+        
+        works_text = f"<b>Most-Matched Skill:</b> {top_skills[0][0].replace('_', ' ').title()} (Level {top_skills[0][1]}/5) — {self._get_skill_insight(top_skills[0][0], job_match)}<br/><br/>"
+        works_text += f"<b>Secondary Strengths:</b> {', '.join([skill.replace('_', ' ').title() for skill, _ in top_skills[1:3]])}"
+        
+        doesnt_work_text = f"<b>Largest Gap Skill:</b> {weak_skills[0][0].replace('_', ' ').title()} (Level {weak_skills[0][1]}/5) — {self._get_improvement_insight(weak_skills[0][0])}<br/><br/>"
+        doesnt_work_text += f"<b>Action:</b> Focus development on {weak_skills[0][0].replace('_', ' ').lower()} through targeted practice and learning."
+        
+        skills_works_p = Paragraph(works_text, cell_style)
+        skills_doesnt_p = Paragraph(doesnt_work_text, cell_style)
+        skills_analysis_data.append([skills_works_p, skills_doesnt_p])
+        
+        skills_table = Table(skills_analysis_data, colWidths=[avail_w/2, avail_w/2])
+        skills_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#F0F8FF')),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 12),
+            ('FONTSIZE', (0, 1), (-1, -1), 10),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 15)
+        ]))
+        story.append(skills_table)
+        story.append(Spacer(1, 25))
+        
+        # Top 5 Industries
+        story.append(Paragraph("Top 5 Industries", subsection_style))
+        industries = self._get_related_industries(job_match)
+        for i, (industry, description) in enumerate(industries[:5], 1):
+            story.append(Paragraph(f"{i}. <b>{industry}</b> — {description}", body_style))
         story.append(Spacer(1, 20))
         
-        # Similar Roles
-        story.append(Paragraph("Related Career Opportunities", heading_style))
-        similar_roles = job_match.get('similar_roles', [])
-        if similar_roles:
-            roles_text = ", ".join(similar_roles)
-            story.append(Paragraph(f"Consider exploring: {roles_text}", styles['Normal']))
+        # Values Check
+        story.append(Paragraph("Values Alignment Check", subsection_style))
+        values_insight = self._generate_values_insight(job_match, analysis_data['profile'])
+        story.append(Paragraph(values_insight, body_style))
+        story.append(Spacer(1, 20))
+        
+        # Career Story
+        story.append(Paragraph("Your Professional Narrative", subsection_style))
+        career_story = job_match.get('career_story', 'Your career story showcases the unique combination of skills and experiences that make you an ideal candidate for this role.')
+        story.append(Paragraph(career_story, body_style))
         
         # Footer
         story.append(Spacer(1, 30))
-        story.append(Paragraph(f"Report generated on {analysis_data['analysis_date']}", styles['Normal']))
+        story.append(Paragraph(f"Report generated on {analysis_data.get('analysis_date', datetime.now().strftime('%Y-%m-%d'))}", 
+                            ParagraphStyle('Footer', parent=styles['Normal'], fontSize=9, textColor=colors.gray)))
         
         # Build PDF
         doc.build(story)
         buffer.seek(0)
         return buffer
+    
+    def _get_skill_insight(self, skill: str, job_match: Dict) -> str:
+        """Generate insight about why a skill works well"""
+        skill_insights = {
+            'programming': 'Essential for technical roles and automation',
+            'creative': 'Drives innovation and unique problem-solving approaches',
+            'leadership': 'Critical for team management and project direction',
+            'problem_solving': 'Core competency for analytical and strategic roles',
+            'working_with_people': 'Vital for collaborative and client-facing positions',
+            'math': 'Foundation for analytical and quantitative roles'
+        }
+        return skill_insights.get(skill, 'Valuable asset for professional success')
 
+    def _generate_one_line_why(self, match: Dict, profile: Dict) -> str:
+        """Generate a concise one-line explanation for job fit"""
+        top_skills = sorted(profile['skills'].items(), key=lambda x: x[1], reverse=True)[:2]
+        skills_text = f"{top_skills[0][0].replace('_', ' ')} + {top_skills[1][0].replace('_', ' ')}"
+        
+        personality = profile['personality']
+        if personality.get('extraversion', 3) >= 4:
+            personality_note = "leadership and visibility"
+        elif personality.get('openness', 3) >= 4:
+            personality_note = "innovation and creativity"
+        else:
+            personality_note = "analytical approach"
+        
+        return f"Perfect blend of {skills_text} skills with {personality_note}."
+    
+    def _get_improvement_insight(self, skill: str) -> str:
+        """Generate insight about skill improvement"""
+        improvement_insights = {
+            'programming': 'Many modern roles expect basic coding literacy',
+            'public_speaking': 'Essential for leadership and visibility',
+            'networking': 'Critical for career advancement and opportunities',
+            'tech_savvy': 'Increasingly important across all industries',
+            'time_management': 'Fundamental for productivity and reliability'
+        }
+        return improvement_insights.get(skill, 'Important for well-rounded professional development')
+
+    def _get_related_industries(self, job_match: Dict) -> List[Tuple[str, str]]:
+        """Get related industries with descriptions"""
+        job_name = job_match['job_name'].lower()
+        
+        industry_mappings = {
+            'software': [
+                ('Technology & Software', 'Direct fit with high growth potential and innovation'),
+                ('Financial Services', 'FinTech and digital transformation opportunities'),
+                ('Healthcare Technology', 'Growing sector with meaningful impact'),
+                ('Consulting', 'Technical consulting and digital strategy'),
+                ('Startups', 'High growth environment with diverse challenges')
+            ],
+            'marketing': [
+                ('Advertising & Media', 'Creative campaigns and brand storytelling'),
+                ('Technology', 'Product marketing and growth strategies'), 
+                ('Consumer Goods', 'Brand management and market research'),
+                ('Healthcare', 'Medical marketing and patient engagement'),
+                ('Professional Services', 'B2B marketing and thought leadership')
+            ],
+            'analyst': [
+                ('Financial Services', 'Investment analysis and risk management'),
+                ('Consulting', 'Business analysis and strategic planning'),
+                ('Technology', 'Data analysis and business intelligence'),
+                ('Healthcare', 'Healthcare analytics and outcomes research'),
+                ('Government', 'Policy analysis and public sector consulting')
+            ]
+        }
+        
+        # Default industries if no specific mapping found
+        default_industries = [
+            ('Professional Services', 'Consulting and advisory roles'),
+            ('Technology', 'Innovation and digital transformation'),
+            ('Financial Services', 'Analysis and strategic planning'),
+            ('Healthcare', 'Meaningful impact and growth sector'),
+            ('Education', 'Knowledge sharing and development')
+        ]
+        
+        for key in industry_mappings:
+            if key in job_name:
+                return industry_mappings[key]
+        
+        return default_industries
+
+    def _generate_values_insight(self, job_match: Dict, profile: Dict) -> str:
+        """Generate insight about values alignment"""
+        work_values = profile['work_values']
+        top_value = max(work_values.items(), key=lambda x: x[1])
+        
+        value_job_fit = {
+            'income': f"This role typically offers competitive compensation with growth potential.",
+            'impact': f"Your work in {job_match['job_name']} will directly contribute to organizational success and meaningful outcomes.",
+            'stability': f"{job_match['job_name']} roles offer strong job security and predictable career progression.",
+            'variety': f"This position provides diverse challenges and project variety to keep you engaged.",
+            'recognition': f"Success in {job_match['job_name']} roles is highly visible and valued by organizations.", 
+            'autonomy': f"This role offers significant independence and decision-making authority."
+        }
+        
+        insight = value_job_fit.get(top_value[0], f"Your top value ({top_value[0]}) aligns well with this career path.")
+        return f"<b>{top_value[0].title()} Priority:</b> {insight}"
+
+    def _create_opening_line(self, job_match: Dict, profile: Dict) -> str:
+        """Create a compelling opening line for interviews"""
+        job_name = job_match['job_name'].lower()
+        top_skills = sorted(profile['skills'].items(), key=lambda x: x[1], reverse=True)[:2]
+        
+        skill_descriptors = {
+            'programming': 'technical problem-solver',
+            'creative': 'innovative thinker', 
+            'leadership': 'results-driven leader',
+            'problem_solving': 'analytical problem-solver',
+            'working_with_people': 'collaborative professional',
+            'math': 'quantitative analyst'
+        }
+        
+        primary_descriptor = skill_descriptors.get(top_skills[0][0], 'dedicated professional')
+        
+        if 'analyst' in job_name:
+            return f"{primary_descriptor} who turns complex data into actionable business insights"
+        elif 'manager' in job_name or 'director' in job_name:
+            return f"{primary_descriptor} who drives team success and delivers measurable results"
+        elif 'developer' in job_name or 'engineer' in job_name:
+            return f"{primary_descriptor} who builds scalable solutions and loves tackling technical challenges"
+        else:
+            return f"{primary_descriptor} passionate about creating value and driving meaningful outcomes"
 
 # Initialize FastAPI app
 app = FastAPI(title="AI-Enhanced Career Matching API - Top 3 Focus", version="2.1.0")
