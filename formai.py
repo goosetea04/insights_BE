@@ -19,6 +19,7 @@ from reportlab.lib.units import inch
 import openai
 import os
 from openai import OpenAI
+import careers 
 
 load_dotenv()
 
@@ -88,118 +89,7 @@ class PersonProfile:
 class AICareerMatcher:
     def __init__(self):
         # Enhanced O*NET Job Database with similar roles mapping
-        self.onet_jobs = {
-            "Software Developer": {
-                "onet_code": "15-1252.00",
-                "skills": {
-                    "math": 3.9, "problem_solving": 4.4, "tech_savvy": 4.6, 
-                    "programming": 4.5, "attention_to_detail": 4.1, "research": 3.8
-                },
-                "work_values": {
-                    "income": 4.1, "impact": 3.8, "stability": 4.0, "variety": 4.2, 
-                    "recognition": 3.6, "autonomy": 4.3
-                },
-                "interests": {
-                    "investigative": 4.4, "realistic": 3.2, "artistic": 2.8, 
-                    "social": 2.1, "enterprising": 2.9, "conventional": 3.3
-                },
-                "work_styles": {
-                    "analytical_thinking": 4.5, "attention_to_detail": 4.3, "dependability": 4.1,
-                    "persistence": 4.0, "stress_tolerance": 3.8, "adaptability": 4.2
-                },
-                "required_skills": ["Programming", "Problem Solving", "Math", "Tech-Savvy", "Attention to Detail"],
-                "similar_roles": ["Data Scientist", "DevOps Engineer", "Full Stack Developer", "Mobile App Developer", "Systems Architect"],
-                "job_keywords": ["coding", "development", "technology", "innovation"]
-            },
-            "Marketing Manager": {
-                "onet_code": "11-2021.00",
-                "skills": {
-                    "public_speaking": 4.3, "creative": 4.0, "networking": 4.2, 
-                    "leadership": 4.1, "writing": 3.9, "working_with_people": 4.0
-                },
-                "work_values": {
-                    "recognition": 4.3, "impact": 4.1, "variety": 4.2, "autonomy": 4.0, 
-                    "income": 4.0, "stability": 3.5
-                },
-                "interests": {
-                    "enterprising": 4.7, "artistic": 3.4, "social": 3.8, 
-                    "investigative": 3.2, "conventional": 3.1, "realistic": 1.9
-                },
-                "work_styles": {
-                    "leadership": 4.4, "stress_tolerance": 4.0, "adaptability": 4.3,
-                    "initiative": 4.2, "achievement": 4.1, "social_orientation": 4.0
-                },
-                "required_skills": ["Public Speaking", "Creative", "Networking", "Leadership"],
-                "similar_roles": ["Brand Manager", "Digital Marketing Specialist", "Product Marketing Manager", "Content Marketing Manager", "Growth Hacker"],
-                "job_keywords": ["branding", "campaigns", "strategy", "growth"]
-            },
-            "Business Engineer": {
-                "onet_code": "17-2199.00",
-                "skills": {
-                    "problem_solving": 4.3, "project_management": 4.1, "math": 4.0, 
-                    "research": 4.2, "tech_savvy": 3.8, "writing": 3.7
-                },
-                "work_values": {
-                    "impact": 4.2, "variety": 4.0, "autonomy": 3.8, "recognition": 3.7, 
-                    "income": 4.0, "stability": 3.9
-                },
-                "interests": {
-                    "investigative": 4.3, "enterprising": 4.0, "realistic": 3.5, 
-                    "conventional": 3.2, "artistic": 2.5, "social": 2.8
-                },
-                "work_styles": {
-                    "analytical_thinking": 4.4, "dependability": 4.2, "persistence": 4.1,
-                    "achievement": 4.0, "adaptability": 3.9, "initiative": 4.0
-                },
-                "required_skills": ["Problem Solving", "Project Management", "Math", "Research", "Tech-Savvy"],
-                "similar_roles": ["Business Analyst", "Management Consultant", "Operations Manager", "Strategy Consultant", "Process Improvement Specialist"],
-                "job_keywords": ["optimization", "analysis", "efficiency", "solutions"]
-            },
-            "Elementary School Teacher": {
-                "onet_code": "25-2021.00",
-                "skills": {
-                    "working_with_people": 4.5, "empathy": 4.4, "public_speaking": 4.2, 
-                    "creative": 4.0, "time_management": 4.1, "writing": 3.8
-                },
-                "work_values": {
-                    "impact": 4.5, "stability": 4.2, "autonomy": 3.2, "recognition": 3.7, 
-                    "income": 3.0, "variety": 3.8
-                },
-                "interests": {
-                    "social": 4.8, "artistic": 3.6, "investigative": 3.4, 
-                    "conventional": 3.0, "enterprising": 2.8, "realistic": 2.1
-                },
-                "work_styles": {
-                    "social_orientation": 4.6, "dependability": 4.4, "stress_tolerance": 4.0,
-                    "adaptability": 4.2, "persistence": 4.1, "concern_for_others": 4.5
-                },
-                "required_skills": ["Working with People", "Empathy", "Public Speaking", "Creative", "Time Management"],
-                "similar_roles": ["Middle School Teacher", "Curriculum Developer", "Education Coordinator", "Learning Specialist", "Academic Coach"],
-                "job_keywords": ["education", "nurturing", "development", "learning"]
-            },
-            "Registered Nurse": {
-                "onet_code": "29-1141.00",
-                "skills": {
-                    "empathy": 4.5, "working_with_people": 4.4, "attention_to_detail": 4.3, 
-                    "problem_solving": 4.1, "time_management": 4.2, "teamwork": 4.3
-                },
-                "work_values": {
-                    "impact": 4.4, "stability": 4.1, "recognition": 3.8, "income": 3.8, 
-                    "autonomy": 3.4, "variety": 3.6
-                },
-                "interests": {
-                    "social": 4.6, "investigative": 4.0, "realistic": 2.9, 
-                    "conventional": 3.2, "artistic": 2.3, "enterprising": 2.8
-                },
-                "work_styles": {
-                    "concern_for_others": 4.7, "stress_tolerance": 4.3, "dependability": 4.4,
-                    "attention_to_detail": 4.3, "adaptability": 4.1, "cooperation": 4.2
-                },
-                "required_skills": ["Empathy", "Working with People", "Attention to Detail", "Problem Solving", "Time Management"],
-                "similar_roles": ["Nurse Practitioner", "Clinical Nurse Specialist", "Charge Nurse", "Case Manager", "Healthcare Coordinator"],
-                "job_keywords": ["healthcare", "compassion", "care", "wellness"]
-            }
-        }
+        self.onet_jobs = careers.onet_jobs
 
     def create_profile_from_request(self, request: PersonProfileRequest) -> PersonProfile:
         """Create PersonProfile from API request"""
@@ -249,6 +139,31 @@ class AICareerMatcher:
             interests=request.interests,
             preferred_career=request.preferred_career
         )
+
+    def get_top_job_matches(self, profile: PersonProfile, top_n: int = 3) -> List[str]:
+        """
+        Calculate match scores for all jobs and return top N job names
+        This is a lightweight calculation without AI insights
+        """
+        job_scores = []
+        
+        for job_name in self.onet_jobs.keys():
+            job = self.onet_jobs[job_name]
+            
+            # Quick scoring calculation
+            skills_score = self._calculate_skills_match(profile.skills, job["skills"])
+            values_score = self._calculate_values_match(profile.work_values, job["work_values"])
+            interests_score = self._calculate_interests_match(profile.interests, job["interests"])
+            work_styles_score = self._calculate_work_styles_match(profile.personality, job.get("work_styles", {}))
+            
+            overall_score = (skills_score * 0.3 + values_score * 0.25 + 
+                           interests_score * 0.2 + work_styles_score * 0.25)
+            
+            job_scores.append((job_name, overall_score))
+        
+        # Sort by score and return top N job names
+        job_scores.sort(key=lambda x: x[1], reverse=True)
+        return [job_name for job_name, _ in job_scores[:top_n]]
 
     async def generate_ai_insights(self, profile: PersonProfile, job_name: str, match_data: Dict) -> Dict:
         """Generate AI-powered insights for a specific job match"""
@@ -695,12 +610,22 @@ class AICareerMatcher:
         
         return strengths, improvements
 
-    async def analyze_person_with_ai(self, profile: PersonProfile) -> Dict:
-        """Analyze a person against all jobs and return enhanced matches with AI insights"""
-        matches = []
+    async def analyze_person_with_top_matches(self, profile: PersonProfile, top_n: int = 3) -> Dict:
+        """
+        MODIFIED METHOD: Analyze a person against only the top N job matches with AI insights
+        This reduces API calls and focuses on most relevant careers
+        """
+        # Step 1: Get top N job matches (lightweight calculation)
+        print(f"Calculating match scores for all {len(self.onet_jobs)} jobs...")
+        top_job_names = self.get_top_job_matches(profile, top_n)
+        print(f"Top {top_n} job matches identified: {', '.join(top_job_names)}")
         
-        for job_name in self.onet_jobs.keys():
-            # Calculate basic match
+        # Step 2: Generate detailed analysis with AI insights for top matches only
+        matches = []
+        for i, job_name in enumerate(top_job_names, 1):
+            print(f"Generating AI insights for match {i}/{top_n}: {job_name}")
+            
+            # Calculate detailed match data
             match_result = self.calculate_job_match(profile, job_name)
             
             # Generate AI insights
@@ -710,12 +635,14 @@ class AICareerMatcher:
             enhanced_match = {**match_result, **ai_insights}
             matches.append(enhanced_match)
         
-        matches.sort(key=lambda x: x["overall_match"], reverse=True)
+        print(f"Analysis complete for top {top_n} matches.")
         
         return {
             "profile": asdict(profile),
             "matches": matches,
             "top_match": matches[0] if matches else None,
+            "total_jobs_considered": len(self.onet_jobs),
+            "jobs_analyzed_with_ai": len(matches),
             "analysis_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
 
@@ -869,7 +796,7 @@ class AICareerMatcher:
 
 
 # Initialize FastAPI app
-app = FastAPI(title="AI-Enhanced Career Matching API", version="2.0.0")
+app = FastAPI(title="AI-Enhanced Career Matching API - Top 3 Focus", version="2.1.0")
 
 # Add CORS middleware
 app.add_middleware(
@@ -883,27 +810,134 @@ app.add_middleware(
 # Initialize the AI matcher
 ai_matcher = AICareerMatcher()
 
-@app.post("/analyze-profile-ai", response_model=AnalysisResponse)
-async def analyze_profile_with_ai(request: PersonProfileRequest):
+@app.post("/analyze-profile-top3", response_model=AnalysisResponse)
+async def analyze_profile_top_3_matches(request: PersonProfileRequest):
     """
-    Analyze a person's profile with AI-enhanced insights and return comprehensive career matching results
+    MODIFIED ENDPOINT: Analyze a person's profile and return AI insights for only the top 3 job matches
+    This is more efficient and focused than analyzing all 15 jobs
     """
     try:
         # Create profile from request
         profile = ai_matcher.create_profile_from_request(request)
         
-        # Analyze the profile with AI insights
-        result = await ai_matcher.analyze_person_with_ai(profile)
+        # Analyze only top 3 matches with AI insights (more efficient)
+        result = await ai_matcher.analyze_person_with_top_matches(profile, top_n=3)
         
         return AnalysisResponse(
             success=True,
-            message=f"Successfully analyzed profile for {profile.name} with AI insights",
+            message=f"Successfully analyzed top 3 career matches for {profile.name} with AI insights",
             result=result,
             analysis_date=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         )
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error analyzing profile: {str(e)}")
+
+@app.post("/analyze-profile-ai", response_model=AnalysisResponse)
+async def analyze_profile_with_ai(request: PersonProfileRequest):
+    """
+    LEGACY ENDPOINT: Analyze all jobs (kept for backward compatibility)
+    WARNING: This analyzes all 15 jobs and may be slower/more expensive
+    """
+    try:
+        # Create profile from request
+        profile = ai_matcher.create_profile_from_request(request)
+        
+        # Analyze all jobs (legacy method - more API calls)
+        matches = []
+        for job_name in ai_matcher.onet_jobs.keys():
+            match_result = ai_matcher.calculate_job_match(profile, job_name)
+            ai_insights = await ai_matcher.generate_ai_insights(profile, job_name, match_result)
+            enhanced_match = {**match_result, **ai_insights}
+            matches.append(enhanced_match)
+        
+        matches.sort(key=lambda x: x["overall_match"], reverse=True)
+        
+        result = {
+            "profile": asdict(profile),
+            "matches": matches,
+            "top_match": matches[0] if matches else None,
+            "analysis_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        
+        return AnalysisResponse(
+            success=True,
+            message=f"Successfully analyzed profile for {profile.name} with AI insights (all {len(matches)} jobs)",
+            result=result,
+            analysis_date=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error analyzing profile: {str(e)}")
+
+@app.get("/quick-match-preview")
+async def get_quick_match_preview(
+    name: str,
+    # Simplified parameters for quick preview
+    math: int = 3,
+    programming: int = 3,
+    creative: int = 3,
+    working_with_people: int = 3,
+    leadership: int = 3
+):
+    """
+    NEW ENDPOINT: Quick preview of top 3 matches without full analysis
+    Useful for initial screening before full AI analysis
+    """
+    try:
+        # Create minimal profile for quick matching
+        minimal_skills = {
+            "math": math,
+            "programming": programming, 
+            "creative": creative,
+            "working_with_people": working_with_people,
+            "leadership": leadership,
+            "problem_solving": 3,
+            "tech_savvy": 3,
+            "teamwork": 3,
+            "attention_to_detail": 3,
+            "research": 3,
+            "writing": 3,
+            "public_speaking": 3,
+            "networking": 3,
+            "empathy": 3,
+            "time_management": 3,
+            "project_management": 3
+        }
+        
+        minimal_profile = PersonProfile(
+            name=name,
+            email="preview@example.com",
+            university="Preview",
+            personality={"openness": 3, "conscientiousness": 3, "extraversion": 3, "agreeableness": 3, "neuroticism": 3},
+            work_values={"income": 3, "impact": 3, "stability": 3, "variety": 3, "recognition": 3, "autonomy": 3},
+            skills=minimal_skills,
+            interests=["investigative"],
+            preferred_career="Preview"
+        )
+        
+        # Get top 3 matches quickly (no AI insights)
+        top_jobs = ai_matcher.get_top_job_matches(minimal_profile, 3)
+        quick_matches = []
+        
+        for job_name in top_jobs:
+            match_data = ai_matcher.calculate_job_match(minimal_profile, job_name)
+            quick_matches.append({
+                "job_name": job_name,
+                "overall_match": match_data["overall_match"],
+                "skills_match": match_data["breakdown"]["skills_match"],
+                "required_skills": match_data["required_skills"][:3]  # Top 3 skills
+            })
+        
+        return {
+            "success": True,
+            "message": f"Quick match preview for {name}",
+            "top_matches": quick_matches,
+            "note": "This is a preview. Use /analyze-profile-top3 for full AI analysis."
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating quick preview: {str(e)}")
 
 @app.get("/download-report/{job_name}")
 async def download_career_report(job_name: str, analysis_data: str):
@@ -960,23 +994,28 @@ async def generate_specific_job_insights(
 async def root():
     """Root endpoint with API information"""
     return {
-        "message": "AI-Enhanced Career Matching API",
-        "version": "2.0.0",
+        "message": "AI-Enhanced Career Matching API - Top 3 Focus",
+        "version": "2.1.0",
+        "optimization": "Now focuses on top 3 job matches for efficient AI analysis",
         "features": [
+            "Top 3 job match focus (efficient)",
             "AI-powered job fit summaries",
-            "Personalized action plans",
+            "Personalized action plans", 
             "Interview preparation insights",
             "Career story generation",
             "PDF report downloads",
-            "Similar role recommendations"
+            "Quick match preview"
         ],
         "endpoints": {
-            "/analyze-profile-ai": "POST - Complete AI-enhanced profile analysis",
+            "/analyze-profile-top3": "POST - AI analysis of top 3 matches (RECOMMENDED)",
+            "/analyze-profile-ai": "POST - Full AI analysis of all jobs (legacy, slower)",
+            "/quick-match-preview": "GET - Quick preview without AI insights",
             "/generate-job-insights": "POST - Generate AI insights for specific job",
             "/download-report/{job_name}": "GET - Download PDF report",
             "/jobs": "GET - List available job types",
             "/health": "GET - Health check"
-        }
+        },
+        "efficiency_note": f"Database contains {len(ai_matcher.onet_jobs)} jobs. Top 3 analysis reduces API calls by ~80%."
     }
 
 @app.get("/jobs")
@@ -994,6 +1033,7 @@ async def get_jobs():
         }
     
     return {
+        "total_jobs": len(ai_matcher.onet_jobs),
         "available_jobs": list(ai_matcher.onet_jobs.keys()),
         "job_details": jobs_info,
         "ai_features": [
@@ -1001,7 +1041,8 @@ async def get_jobs():
             "Career development roadmap", 
             "Interview preparation guide",
             "Professional narrative development"
-        ]
+        ],
+        "recommendation": "Use /analyze-profile-top3 for efficient analysis of best matches"
     }
 
 @app.get("/health")
@@ -1022,8 +1063,10 @@ async def health_check():
     return {
         "status": "healthy",
         "ai_service": ai_status,
+        "total_jobs_in_database": len(ai_matcher.onet_jobs),
+        "optimization": "Top 3 matching active",
         "timestamp": datetime.now().isoformat(),
-        "version": "2.0.0"
+        "version": "2.1.0"
     }
 
 if __name__ == "__main__":
@@ -1033,4 +1076,6 @@ if __name__ == "__main__":
     if not os.getenv('OPENAI_API_KEY'):
         print("Warning: OPENAI_API_KEY environment variable not set!")
     
+    print(f"Starting Career Matcher API with {len(careers.onet_jobs) if 'careers' in globals() else '?'} jobs in database")
+    print("Optimization: AI analysis focuses on top 3 matches for efficiency")
     uvicorn.run(app, host="0.0.0.0", port=8000)
