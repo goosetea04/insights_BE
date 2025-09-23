@@ -1068,11 +1068,10 @@ async def analyze_profile_top_3_matches(request: PersonProfileRequest):
     This is more efficient and focused than analyzing all 15 jobs
     """
 
-    if request.updates:
-        data = request.model_dump(mode="json", exclude_none=True)
-        data["created_at"] = firestore.SERVER_TIMESTAMP
-        ref = db.collection("user").document()
-        ref.set(data, merge=True)
+    data = request.model_dump(mode="json", exclude_none=True)
+    data["created_at"] = firestore.SERVER_TIMESTAMP
+    ref = db.collection("user").document()
+    ref.set(data, merge=True)
     
     
     try:
