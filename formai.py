@@ -68,7 +68,8 @@ class PersonProfileRequest(BaseModel):
     project_management: int = Field(..., ge=1, le=5, description="Project management")
     research: int = Field(..., ge=1, le=5, description="Research skills")
     teamwork: int = Field(..., ge=1, le=5, description="Teamwork")
-    
+    # Consent for further updates 
+    updates: bool =  Field(..., description="Consent for further updates")
     # Interests (multiple selection)
     interests: List[str] = Field(..., description="List of interests from: investigative, social, artistic, enterprising, realistic, conventional")
 
@@ -1067,10 +1068,13 @@ async def analyze_profile_top_3_matches(request: PersonProfileRequest):
     This is more efficient and focused than analyzing all 15 jobs
     """
 
-    data = request.model_dump(mode="json", exclude_none=True)
-    data["created_at"] = firestore.SERVER_TIMESTAMP
-    ref = db.collection("user").document()
-    ref.set(data, merge=True)
+    if request.updates:
+        data = request.model_dump(mode="json", exclude_none=True)
+        data["created_at"] = firestore.SERVER_TIMESTAMP
+        ref = db.collection("user").document()
+        ref.set(data, merge=True)
+    
+    
     try:
         # Create profile from request
         profile = ai_matcher.create_profile_from_request(request)
